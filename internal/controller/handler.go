@@ -1,13 +1,19 @@
 package controller
 
-import "todo/internal/storage"
+import (
+	"todo/internal/storage"
+	"todo/internal/utils"
+)
 
 type Handler struct {
-	storage storage.Storage
+	storage   storage.Storage
+	validator *utils.Validator
 }
 
 func NewHandler(s storage.Storage) *Handler {
+	v := utils.NewValidator()
 	return &Handler{
-		storage: s,
+		storage:   s,
+		validator: v,
 	}
 }

@@ -9,7 +9,6 @@ import (
 	"todo/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
 )
 
 func (h *Handler) GetTodos(c *fiber.Ctx) error {
@@ -47,9 +46,13 @@ func (h *Handler) CreateTodo(c *fiber.Ctx) error {
 		return err
 	}
 
+	err = h.validator.Validate(body)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
 	todo, err := h.storage.CreateTodo(&body)
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 
@@ -81,6 +84,11 @@ func (h *Handler) UpdateTodo(c *fiber.Ctx) error {
 
 	if body.Id == 0 {
 		return fiber.NewError(fiber.StatusBadRequest, "[Id integer] You need to provide a valid \"Id\" in a json format inside the body of the request.")
+	}
+
+	err = h.validator.Validate(body)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	todo, err := h.storage.UpdateTodo(&body)
