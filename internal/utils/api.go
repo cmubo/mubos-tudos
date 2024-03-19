@@ -18,34 +18,6 @@ func JsonResponse[T any](ctx *fiber.Ctx, data T, rData types.Response) error {
 	})
 }
 
-// This might not be needed
-func GetSortByMap(query string, defaultSort string) types.SortMap {
-	query = strings.ReplaceAll(query, " ", "")
-	if query == "" {
-		query = defaultSort
-	}
-
-	items := strings.Split(query, ",")
-
-	sortMap := types.SortMap{}
-	for _, item := range items {
-		createSortItem(sortMap, item)
-	}
-
-	return sortMap
-}
-
-func createSortItem(destination types.SortMap, item string) {
-	splitItem := strings.Split(item, ".")
-
-	splitItem[1] = strings.ToUpper(splitItem[1])
-	if splitItem[1] != "DESC" && splitItem[1] != "ASC" {
-		splitItem[1] = "DESC"
-	}
-
-	destination[splitItem[0]] = splitItem[1]
-}
-
 // Returns format: "created_at DESC", acceptedSortMethods map should be "method": "DESC" | "ASC"
 func GetSortByString(query string, defaultSort string, acceptedSortMethods map[string]string) string {
 	isWhitespacePresent := regexp.MustCompile(`\s`).MatchString(query)

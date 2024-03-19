@@ -9,5 +9,3 @@ type Response struct {
 	Message string
 	Status  string
 }
-
-type SortMap map[string]string
