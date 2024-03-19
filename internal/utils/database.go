@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -12,6 +13,7 @@ func DbErrorSinglularResource(err error) error {
 		return fiber.NewError(fiber.StatusNotFound, fiber.ErrNotFound.Message)
 	}
 
+	log.Error(err)
 	return fiber.NewError(fiber.StatusInternalServerError, fiber.ErrInternalServerError.Message)
 }
 
@@ -20,6 +22,7 @@ func DbErrorMultiResource[T any](err error, emptyResult T) (T, int, error) {
 		return emptyResult, 0, nil
 	}
 
+	log.Error(err)
 	return emptyResult, 0, fiber.NewError(fiber.StatusInternalServerError, fiber.ErrInternalServerError.Message)
 }
 

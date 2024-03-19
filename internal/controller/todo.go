@@ -15,7 +15,15 @@ func (h *Handler) GetTodos(c *fiber.Ctx) error {
 	page := utils.GetPaginationQuery(c.Query("page"), 1)
 	perPage := utils.GetPaginationQuery(c.Query("per_page"), constants.PAGINATION_PERPAGE_DEFAULT)
 
-	todos, count, err := h.storage.GetTodos(types.Pagination{Page: page, PerPage: perPage})
+	acceptedSortMethods := map[string]string{
+		"created_at": "DESC",
+		"title":      "DESC",
+		"updated_at": "DESC",
+	}
+
+	sortByString := utils.GetSortByString(c.Query("sort_by"), "created_at DESC", acceptedSortMethods)
+
+	todos, count, err := h.storage.GetTodos(types.Pagination{Page: page, PerPage: perPage}, sortByString)
 	if err != nil {
 		return err
 	}
