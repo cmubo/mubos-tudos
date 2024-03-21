@@ -5,13 +5,14 @@ import (
 	"todo/internal/types"
 	"todo/internal/utils"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 )
 
 type TodoStore interface {
 	GetTodo(int) (*model.Todo, error)
-	GetTodos(types.Pagination, string) ([]*model.Todo, int, error)
+	GetTodos(types.Pagination, string, []types.Filter) ([]*model.Todo, int, error)
 	CreateTodo(*model.Todo) (*model.Todo, error)
 	UpdateTodo(*model.Todo) (*model.Todo, error)
 	DeleteTodo(id int) error
@@ -19,6 +20,7 @@ type TodoStore interface {
 
 func (s *Store) GetTodo(id int) (*model.Todo, error) {
 	todo := model.Todo{}
+
 	err := s.Db.Get(&todo, "SELECT * FROM todos WHERE id = $1", id)
 
 	if err != nil {
@@ -28,13 +30,21 @@ func (s *Store) GetTodo(id int) (*model.Todo, error) {
 	return &todo, nil
 }
 
-func (s *Store) GetTodos(pagination types.Pagination, orderByString string) ([]*model.Todo, int, error) {
+func (s *Store) GetTodos(pagination types.Pagination, orderByString string, filters []types.Filter) ([]*model.Todo, int, error) {
 	todos := []*model.Todo{}
 	offset := utils.GetPaginationOffset(pagination)
 	limit := utils.GetPaginationLimit(pagination)
 
-	connString := "SELECT * FROM todos ORDER BY " + orderByString + " LIMIT $1 OFFSET $2"
-	err := s.Db.Select(&todos, connString, limit, offset)
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	query := psql.Select("*").From("todos").OrderBy(orderByString).Limit(uint64(limit)).Offset(uint64(offset))
+	query = utils.AddFiltersToSquirrelQuery(query, filters)
+	sql, args, err := query.ToSql()
+
+	if err != nil {
+		return utils.DbErrorMultiResource(err, todos)
+	}
+
+	err = s.Db.Select(&todos, sql, args...)
 
 	if err != nil {
 		return utils.DbErrorMultiResource(err, todos)
