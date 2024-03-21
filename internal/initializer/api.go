@@ -2,6 +2,8 @@ package initializer
 
 import (
 	"log"
+	"todo/internal/config"
+	"todo/internal/database"
 	"todo/internal/router"
 
 	"github.com/gofiber/fiber/v2"
@@ -21,7 +23,20 @@ func NewAPIServer(listenAddr string, db *sqlx.DB) *APIServer {
 	}
 }
 
-func (s *APIServer) Start() {
+func SetupApi() *fiber.App {
+	store, err := database.InitializeDatabase()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	server := NewAPIServer(config.Config("PORT"), store)
+
+	app := server.Setup()
+
+	return app
+}
+
+func (s *APIServer) Setup() *fiber.App {
 	app := fiber.New()
 
 	// Put top level middleware here
@@ -34,5 +49,5 @@ func (s *APIServer) Start() {
 
 	router.SetupRoutes(app, s.db)
 
-	log.Fatal(app.Listen(":3000"))
+	return app
 }

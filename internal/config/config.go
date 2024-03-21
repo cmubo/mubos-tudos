@@ -8,6 +8,8 @@ import (
 )
 
 func Config(key string) string {
+	// TODO: there is a problem with this in tests, since any tests create a temporary directory
+	// When a test is ran from a directory, it cant find the env file because it isnt there.
 	err := godotenv.Load()
 
 	if err != nil {
