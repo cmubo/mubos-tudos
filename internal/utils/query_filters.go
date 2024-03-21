@@ -11,6 +11,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
+// Pass in the filter query string (everything after filter=) and also the accepted filters map.
 func GetFiltersFromQuery(query string, acceptedFilters types.AcceptedFilters) []types.Filter {
 	var filters = []types.Filter{}
 
@@ -25,17 +26,34 @@ func GetFiltersFromQuery(query string, acceptedFilters types.AcceptedFilters) []
 		return filters
 	}
 
-	filters = GetFiltersFromQueries(splitQuery)
-	filters = CreateAcceptedFiltersList(filters, acceptedFilters)
+	filters = getFiltersFromQueries(splitQuery)
+	filters = createAcceptedFiltersList(filters, acceptedFilters)
 
 	return filters
 }
 
-func CreateAcceptedFiltersList(filters []types.Filter, acceptedFilters types.AcceptedFilters) []types.Filter {
+func AddFiltersToSquirrelQuery(query sq.SelectBuilder, filters []types.Filter) sq.SelectBuilder {
+	if len(filters) > 0 {
+		for _, filter := range filters {
+			operator, ok := constants.SqlOperators[filter.Operator]
+			if !ok {
+				continue
+			}
+
+			// name and operator are approved.
+			queryString := fmt.Sprintf("%s %s ?", filter.Name, operator)
+			query = query.Where(queryString, filter.Value)
+		}
+	}
+
+	return query
+}
+
+func createAcceptedFiltersList(filters []types.Filter, acceptedFilters types.AcceptedFilters) []types.Filter {
 	result := []types.Filter{}
 
 	for _, filter := range filters {
-		if ok := IsAcceptedFilter(filter, acceptedFilters); ok {
+		if ok := isAcceptedFilter(filter, acceptedFilters); ok {
 			result = append(result, filter)
 		}
 	}
@@ -43,7 +61,7 @@ func CreateAcceptedFiltersList(filters []types.Filter, acceptedFilters types.Acc
 	return result
 }
 
-func IsAcceptedFilter(filter types.Filter, acceptedFilters types.AcceptedFilters) bool {
+func isAcceptedFilter(filter types.Filter, acceptedFilters types.AcceptedFilters) bool {
 	// is the name part of the accepted filters list/map
 	acceptedFilter, ok := acceptedFilters[filter.Name]
 	if !ok {
@@ -51,10 +69,10 @@ func IsAcceptedFilter(filter types.Filter, acceptedFilters types.AcceptedFilters
 	}
 
 	// The name is part of the accepted filters, is the operator one of the accepter operators. Return since this is the final check
-	return IsAcceptedFilterOperator(filter.Operator, acceptedFilter.Operator)
+	return isAcceptedFilterOperator(filter.Operator, acceptedFilter.Operator)
 }
 
-func IsAcceptedFilterOperator(operator string, acceptedOperators []string) bool {
+func isAcceptedFilterOperator(operator string, acceptedOperators []string) bool {
 	return contains(acceptedOperators, operator)
 }
 
@@ -67,11 +85,11 @@ func contains(s []string, e string) bool {
 	return false
 }
 
-func GetFiltersFromQueries(queries []string) []types.Filter {
+func getFiltersFromQueries(queries []string) []types.Filter {
 	filters := []types.Filter{}
 
 	for _, query := range queries {
-		filter, err := GetFilterFromQuery(query)
+		filter, err := getFilterFromQuery(query)
 		if err != nil {
 			continue
 		}
@@ -81,7 +99,7 @@ func GetFiltersFromQueries(queries []string) []types.Filter {
 	return filters
 }
 
-func GetFilterFromQuery(query string) (types.Filter, error) {
+func getFilterFromQuery(query string) (types.Filter, error) {
 	splitQuery := strings.Split(query, "=")
 	if len(splitQuery) != 2 {
 		return types.Filter{}, errors.New("no value in filter")
@@ -132,21 +150,4 @@ func getFilterOperator(v string) (string, error) {
 	str := strings.Trim(substr, "[]")
 
 	return str, nil
-}
-
-func AddFiltersToSquirrelQuery(query sq.SelectBuilder, filters []types.Filter) sq.SelectBuilder {
-	if len(filters) > 0 {
-		for _, filter := range filters {
-			operator, ok := constants.SqlOperators[filter.Operator]
-			if !ok {
-				continue
-			}
-
-			// name and operator are approved.
-			queryString := fmt.Sprintf("%s %s ?", filter.Name, operator)
-			query = query.Where(queryString, filter.Value)
-		}
-	}
-
-	return query
 }

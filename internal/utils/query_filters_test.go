@@ -36,10 +36,10 @@ var (
 	}
 )
 
-func TestGetFilterMap(t *testing.T) {
+func TestGetFiltersFromQueries(t *testing.T) {
 	filters := []string{"completed[eq]=true"}
 
-	res := GetFiltersFromQueries(filters)
+	res := getFiltersFromQueries(filters)
 	expected := []types.Filter{completedFilter}
 
 	if eq := reflect.DeepEqual(res, expected); !eq {
@@ -47,7 +47,7 @@ func TestGetFilterMap(t *testing.T) {
 	}
 
 	filters = []string{"completed[eq]=true", "balance[gte]=4"}
-	res = GetFiltersFromQueries(filters)
+	res = getFiltersFromQueries(filters)
 	expected = []types.Filter{completedFilter, balanceFilter}
 
 	if eq := reflect.DeepEqual(res, expected); !eq {
@@ -56,7 +56,7 @@ func TestGetFilterMap(t *testing.T) {
 
 	// Multiple of same value
 	filters = []string{"completed[eq]=true", "balance[gte]=4", "balance[lte]=10"}
-	res = GetFiltersFromQueries(filters)
+	res = getFiltersFromQueries(filters)
 	expected = []types.Filter{
 		completedFilter,
 		balanceFilter,
@@ -73,7 +73,7 @@ func TestGetFilterMap(t *testing.T) {
 
 	// Ignore one invalid
 	filters = []string{"completed[eq]", "=4"}
-	res = GetFiltersFromQueries(filters)
+	res = getFiltersFromQueries(filters)
 	expected = []types.Filter{}
 
 	if eq := reflect.DeepEqual(res, expected); !eq {
@@ -82,7 +82,7 @@ func TestGetFilterMap(t *testing.T) {
 
 	// ignore one invalid but keep the other
 	filters = []string{"completed[eq].true", "balance[gte]=4"}
-	res = GetFiltersFromQueries(filters)
+	res = getFiltersFromQueries(filters)
 	expected = []types.Filter{balanceFilter}
 
 	if eq := reflect.DeepEqual(res, expected); !eq {
@@ -91,7 +91,7 @@ func TestGetFilterMap(t *testing.T) {
 
 	// ignore one invalid (extra equals)
 	filters = []string{"completed[eq]=t=rue", "balance[gte]=4"}
-	res = GetFiltersFromQueries(filters)
+	res = getFiltersFromQueries(filters)
 	expected = []types.Filter{balanceFilter}
 
 	if eq := reflect.DeepEqual(res, expected); !eq {
@@ -101,17 +101,17 @@ func TestGetFilterMap(t *testing.T) {
 
 func TestIsAcceptedFilter(t *testing.T) {
 	// Correct filter
-	if ok := IsAcceptedFilter(completedFilter, acceptedFilters); !ok {
+	if ok := isAcceptedFilter(completedFilter, acceptedFilters); !ok {
 		t.Errorf("Result was incorrect expected: %v but got: %v", true, false)
 	}
 
 	// Correct filter
-	if ok := IsAcceptedFilter(balanceFilter, acceptedFilters); !ok {
+	if ok := isAcceptedFilter(balanceFilter, acceptedFilters); !ok {
 		t.Errorf("Result was incorrect expected: %v but got: %v", true, false)
 	}
 
 	// Not accepted filter
-	if ok := IsAcceptedFilter(typeFilter, acceptedFilters); ok {
+	if ok := isAcceptedFilter(typeFilter, acceptedFilters); ok {
 		t.Errorf("Result was incorrect expected: %v but got: %v", false, true)
 	}
 
@@ -119,7 +119,7 @@ func TestIsAcceptedFilter(t *testing.T) {
 	completedFilterWrongOperator.Operator = "gte"
 
 	// Not accepted operator
-	if ok := IsAcceptedFilter(completedFilterWrongOperator, acceptedFilters); ok {
+	if ok := isAcceptedFilter(completedFilterWrongOperator, acceptedFilters); ok {
 		t.Errorf("Result was incorrect expected: %v but got: %v", false, true)
 	}
 }
@@ -127,21 +127,21 @@ func TestIsAcceptedFilter(t *testing.T) {
 func TestCreateAcceptedFiltersList(t *testing.T) {
 	// Nothing should be filtered out
 	filters := []types.Filter{completedFilter, balanceFilter}
-	res := CreateAcceptedFiltersList(filters, acceptedFilters)
+	res := createAcceptedFiltersList(filters, acceptedFilters)
 	if eq := reflect.DeepEqual(res, filters); !eq {
 		t.Errorf("Result was incorrect expected: %v but got: %v", filters, res)
 	}
 
 	// Nothing should be filtered out
 	filters = []types.Filter{completedFilter}
-	res = CreateAcceptedFiltersList(filters, acceptedFilters)
+	res = createAcceptedFiltersList(filters, acceptedFilters)
 	if eq := reflect.DeepEqual(res, filters); !eq {
 		t.Errorf("Result was incorrect expected: %v but got: %v", filters, res)
 	}
 
 	// One should be filtered out
 	filters = []types.Filter{completedFilter, typeFilter}
-	res = CreateAcceptedFiltersList(filters, acceptedFilters)
+	res = createAcceptedFiltersList(filters, acceptedFilters)
 	expected := []types.Filter{completedFilter}
 	if eq := reflect.DeepEqual(res, expected); !eq {
 		t.Errorf("Result was incorrect expected: %v but got: %v", expected, res)
@@ -151,7 +151,7 @@ func TestCreateAcceptedFiltersList(t *testing.T) {
 	completedFilterCopy := completedFilter
 	completedFilterCopy.Operator = "gte"
 	filters = []types.Filter{completedFilterCopy, typeFilter}
-	res = CreateAcceptedFiltersList(filters, acceptedFilters)
+	res = createAcceptedFiltersList(filters, acceptedFilters)
 	expected = []types.Filter{}
 	if eq := reflect.DeepEqual(res, expected); !eq {
 		t.Errorf("Result was incorrect expected: %v but got: %v", expected, res)
