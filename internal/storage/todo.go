@@ -60,8 +60,8 @@ func (s *Store) GetTodos(pagination types.Pagination, orderByString string, filt
 
 func (s *Store) CreateTodo(todo *model.Todo) (*model.Todo, error) {
 	connString := "INSERT INTO todos (title, description, completed) VALUES ($1,$2,$3) RETURNING *"
-	todores := model.Todo{}
-	err := s.Db.Get(&todores, connString, todo.Title, todo.Description, todo.Completed)
+	res := model.Todo{}
+	err := s.Db.Get(&res, connString, todo.Title, todo.Description, todo.Completed)
 
 	if err != nil {
 		log.Error(err)
@@ -69,7 +69,7 @@ func (s *Store) CreateTodo(todo *model.Todo) (*model.Todo, error) {
 		return nil, fiber.NewError(fiber.StatusInternalServerError, fiber.ErrInternalServerError.Message)
 	}
 
-	return &todores, nil
+	return &res, nil
 }
 
 func (s *Store) UpdateTodo(todo *model.Todo) (*model.Todo, error) {

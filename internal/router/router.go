@@ -18,6 +18,9 @@ func SetupRoutes(app *fiber.App, db *sqlx.DB) {
 	store := storage.NewStorage(db)
 	h := controller.NewHandler(store)
 
+	// Users
+	api.Post("/register", h.CreateUser)
+
 	// Todos
 	api.Get("/todo", h.GetTodos)
 	api.Post("/todo", h.CreateTodo)

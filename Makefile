@@ -28,9 +28,10 @@ force_migration:
 	migrate -source file://db/migrations \
 			-database postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSLMODE} force $(version)
 
-# Arguments: migration_name			
+# Example: make create_migration name=create_users_table
+# Arguments: migration_name	
 create_migration:
-	migrate create -ext sql -dir db/migrations -seq $(migration_name)
+	migrate create -ext sql -dir db/migrations -seq $(name)
 
 test:
 	go test ./...
