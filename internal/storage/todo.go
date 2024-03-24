@@ -21,7 +21,7 @@ type TodoStore interface {
 func (s *Store) GetTodo(id int) (*model.Todo, error) {
 	todo := model.Todo{}
 
-	err := s.Db.Get(&todo, "SELECT * FROM todos WHERE id = $1", id)
+	err := s.Db.Get(&todo, "SELECT * FROM todos WHERE id = $1 LIMIT 1", id)
 
 	if err != nil {
 		return nil, utils.DbErrorSinglularResource(err)

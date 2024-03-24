@@ -6,14 +6,14 @@ import (
 )
 
 type Handler struct {
-	storage   storage.Storage
-	validator *utils.Validator
+	Storage   storage.Storage
+	Validator *utils.Validator
 }
 
 func NewHandler(s storage.Storage) *Handler {
 	v := utils.NewValidator()
 	return &Handler{
-		storage:   s,
-		validator: v,
+		Storage:   s,
+		Validator: v,
 	}
 }

@@ -1,8 +1,10 @@
 package storage
 
 import (
+	"fmt"
 	"todo/internal/model"
 	"todo/internal/types"
+	"todo/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
@@ -10,14 +12,36 @@ import (
 
 type UserStore interface {
 	GetUser(int) (*model.User, error)
+	GetUserFromEmail(string) (*model.User, error)
 	GetUsers(types.Pagination, string, []types.Filter) ([]*model.User, int, error)
 	CreateUser(*model.User) (*model.User, error)
 	UpdateUser(*model.User) (*model.User, error)
 	DeleteUser(id int) error
 }
 
-func (s *Store) GetUser(_ int) (*model.User, error) {
-	panic("not implemented") // TODO: Implement
+func (s *Store) GetUser(id int) (*model.User, error) {
+	fmt.Println(id)
+	user := model.User{}
+
+	err := s.Db.Get(&user, "SELECT * FROM users WHERE id = $1 LIMIT 1", id)
+
+	if err != nil {
+		return nil, utils.DbErrorSinglularResource(err)
+	}
+
+	return &user, nil
+}
+
+func (s *Store) GetUserFromEmail(email string) (*model.User, error) {
+	user := model.User{}
+
+	err := s.Db.Get(&user, "SELECT * FROM users WHERE email = $1", email)
+
+	if err != nil {
+		return nil, utils.DbErrorSinglularResource(err)
+	}
+
+	return &user, nil
 }
 
 func (s *Store) GetUsers(_ types.Pagination, _ string, _ []types.Filter) ([]*model.User, int, error) {
