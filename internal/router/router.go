@@ -18,18 +18,20 @@ func SetupRoutes(app *fiber.App, db *sqlx.DB) {
 
 	store := storage.NewStorage(db)
 	h := controller.NewHandler(store)
+	authenticatedRoute := func(c *fiber.Ctx) error {
+		// Checks whether there is a valid JWT token sent and it hasnt expired.
+		return middleware.RequireAuth(c, h)
+	}
 
 	// Users
 	api.Post("/register", h.CreateUser)
 	api.Post("/login", h.Login)
 
-	// The api/validate route is now authenticated using this
-	app.Use("/api/validate", func(c *fiber.Ctx) error {
-		return middleware.RequireAuth(c, h)
-	})
+	app.Use("/api/validate", authenticatedRoute)
 	api.Get("/validate", h.Validate)
 
 	// Todos
+	api.Use("/todo", authenticatedRoute)
 	api.Get("/todo", h.GetTodos)
 	api.Post("/todo", h.CreateTodo)
 	api.Put("/todo", h.UpdateTodo)

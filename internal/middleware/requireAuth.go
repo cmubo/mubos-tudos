@@ -43,22 +43,18 @@ func RequireAuth(c *fiber.Ctx, h *controller.Handler) error {
 
 		// Check the expiration
 		if float64(time.Now().Unix()) > expiration.(float64) {
-			log.Error(err)
 			return fiber.NewError(fiber.StatusUnauthorized, "Authentication failed")
 		}
 
 		// FInd user with token subject
 		user, err := h.Storage.GetUser(int(userId))
 		if err != nil {
-			log.Error(err)
 			return fiber.NewError(fiber.StatusUnauthorized, "Authentication failed")
 		}
 
 		// Attach to the request
 		c.Locals("user", user)
 	} else {
-		log.Error(err)
-
 		return fiber.NewError(fiber.StatusUnauthorized, "Authentication failed")
 	}
 

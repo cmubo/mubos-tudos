@@ -72,36 +72,56 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnauthorized, constants.MSG_LOGIN_FAILED_DETAILS)
 	}
 
-	// Generate a jwt token
-	// Create a new token object, specifying signing method and the claims you would like it to contain.
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": userRes.Id,
-		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
-	})
-
-	// Sign and get the complete encoded token as a string using the secret
-	tokenString, err := token.SignedString([]byte(config.Config("JWT_SECRET")))
-	if err := c.BodyParser(&body); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, constants.MSG_FAILED_CREATE_TOKEN)
+	jwtToken, err := createJwtToken(int(userRes.Id))
+	if err != nil {
+		return err
 	}
 
-	// send token back in cookie
-	cookie := new(fiber.Cookie)
-	cookie.Name = "authorization"
-	cookie.Value = tokenString
-	cookie.HTTPOnly = true
-	cookie.Secure = false // TODO: if this isnt on local set it to true
-	cookie.Expires = time.Now().Add(time.Hour * 24 * 30)
-
-	// Set cookie
-	c.Cookie(cookie)
+	setAuthCookie(c, jwtToken)
 
 	// Return with success message
 	return utils.JsonResponse(c, "", constants.RESPONSE_SUCCESFUL_LOGIN)
 }
 
 func (h *Handler) Validate(c *fiber.Ctx) error {
-	user := c.Locals("user")
+	user := c.Locals("user").(*model.User)
+
+	// Renew the JWT token
+	jwtToken, err := createJwtToken(int(user.Id))
+	if err != nil {
+		return err
+	}
+
+	setAuthCookie(c, jwtToken)
 
 	return utils.JsonResponse(c, user, constants.RESPONSE_SUCCESFUL_VALIDATION)
+}
+
+func createJwtToken(userId int) (string, error) {
+	// Create a new token object, specifying signing method and the claims.
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": userId,
+		"exp": time.Now().Add(time.Hour * 24 * 14).Unix(), // 14 days
+	})
+
+	// Sign and get the complete encoded token as a string using the secret
+	tokenString, err := token.SignedString([]byte(config.Config("JWT_SECRET")))
+	if err != nil {
+		return "", fiber.NewError(fiber.StatusInternalServerError, constants.MSG_FAILED_CREATE_TOKEN)
+	}
+
+	return tokenString, nil
+}
+
+func setAuthCookie(c *fiber.Ctx, token string) {
+	// send token cookie
+	cookie := new(fiber.Cookie)
+	cookie.Name = "authorization"
+	cookie.Value = token
+	cookie.HTTPOnly = true
+	cookie.Secure = false                                // TODO: environment
+	cookie.Expires = time.Now().Add(time.Hour * 24 * 14) // 14 days
+
+	// Set cookie
+	c.Cookie(cookie)
 }
