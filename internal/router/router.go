@@ -11,10 +11,10 @@ import (
 
 func SetupRoutes(app *fiber.App, db *sqlx.DB) {
 
+	app.Get("/hello", controller.Hello)
+
 	// Create api group
 	api := app.Group("/api")
-
-	api.Get("/", controller.Hello)
 
 	store := storage.NewStorage(db)
 	h := controller.NewHandler(store)
