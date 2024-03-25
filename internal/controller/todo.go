@@ -18,7 +18,7 @@ func (h *Handler) GetTodos(c *fiber.Ctx) error {
 
 	sortByString := utils.GetSortByString(c.Query("sort_by"), "created_at DESC", constants.AcceptedSortMethodsTodo)
 
-	todos, count, err := h.storage.GetTodos(types.Pagination{Page: page, PerPage: perPage}, sortByString, filters)
+	todos, count, err := h.Storage.GetTodos(types.Pagination{Page: page, PerPage: perPage}, sortByString, filters)
 	if err != nil {
 		return err
 	}
@@ -34,7 +34,7 @@ func (h *Handler) GetTodo(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusNotFound, fiber.ErrNotFound.Message)
 	}
 
-	todo, err := h.storage.GetTodo(id)
+	todo, err := h.Storage.GetTodo(id)
 	if err != nil {
 		return err
 	}
@@ -49,12 +49,12 @@ func (h *Handler) CreateTodo(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = h.validator.Validate(body)
+	err = h.Validator.Validate(body)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	todo, err := h.storage.CreateTodo(&body)
+	todo, err := h.Storage.CreateTodo(&body)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (h *Handler) DeleteTodo(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusNotFound, fiber.ErrNotFound.Message)
 	}
 
-	err = h.storage.DeleteTodo(id)
+	err = h.Storage.DeleteTodo(id)
 	if err != nil {
 		return err
 	}
@@ -89,12 +89,12 @@ func (h *Handler) UpdateTodo(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "[Id integer] You need to provide a valid \"Id\" in a json format inside the body of the request.")
 	}
 
-	err = h.validator.Validate(body)
+	err = h.Validator.Validate(body)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	todo, err := h.storage.UpdateTodo(&body)
+	todo, err := h.Storage.UpdateTodo(&body)
 	if err != nil {
 		return err
 	}

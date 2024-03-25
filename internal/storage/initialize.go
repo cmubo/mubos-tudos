@@ -15,6 +15,7 @@ type Store struct {
 
 type Storage interface {
 	TodoStore
+	UserStore
 }
 
 func NewStorage(db *sqlx.DB) *Store {
