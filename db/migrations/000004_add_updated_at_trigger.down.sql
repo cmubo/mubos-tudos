@@ -1,1 +1,0 @@
-DROP TRIGGER IF EXISTS update_todos_updated_at ON todos;
