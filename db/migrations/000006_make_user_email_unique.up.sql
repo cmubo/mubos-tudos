@@ -1,5 +1,0 @@
-BEGIN;
-
-ALTER TABLE users ADD UNIQUE (email);
-
-COMMIT;

@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"fmt"
 	"todo/internal/model"
 	"todo/internal/types"
 	"todo/internal/utils"
@@ -20,7 +19,6 @@ type UserStore interface {
 }
 
 func (s *Store) GetUser(id int) (*model.User, error) {
-	fmt.Println(id)
 	user := model.User{}
 
 	err := s.Db.Get(&user, "SELECT * FROM users WHERE id = $1 LIMIT 1", id)
