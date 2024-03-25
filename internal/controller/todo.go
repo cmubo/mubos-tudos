@@ -11,16 +11,29 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// GetTodos godoc
+//
+//	@Summary		Get Todos
+//	@Description	Get a list of todos
+//	@Tags			todo
+//	@Accept			json
+//	@Produce		json
+//	@Param			page	query	integer		false	"Page number, defaults to 1"
+//	@Param			per_page	query	integer		false	"Results per request, defaults to 20, max 50."
+//	@Param			filter	query	string		false	"Filters seperated via &. example: ?filter[eq]=completed=true&balance[gte]=50."
+//	@Param			sort_by		query	string		false	"sort the results by. string value of the db column name and then either DESC or ASC for direction. Example: created_at DESC."
+//	@Success		200	{array}	model.Todo
+//	@Failure		500	{object}	string
+//	@Router			/todo [get]
 func (h *Handler) GetTodos(c *fiber.Ctx) error {
 	page := utils.GetPaginationQuery(c.Query("page"), 1)
 	perPage := utils.GetPaginationQuery(c.Query("per_page"), constants.PAGINATION_PERPAGE_DEFAULT)
 	filters := utils.GetFiltersFromQuery(c.Query("filter"), constants.TodoAcceptedFilters)
-
 	sortByString := utils.GetSortByString(c.Query("sort_by"), "created_at DESC", constants.AcceptedSortMethodsTodo)
 
 	todos, count, err := h.Storage.GetTodos(types.Pagination{Page: page, PerPage: perPage}, sortByString, filters)
 	if err != nil {
-		return err
+		return fiber.NewError(fiber.StatusInternalServerError, fiber.ErrInternalServerError.Message)
 	}
 
 	c.Set("Results-Count", fmt.Sprint(count))
@@ -28,6 +41,17 @@ func (h *Handler) GetTodos(c *fiber.Ctx) error {
 	return utils.JsonResponse(c, todos, constants.RESPONSE_SUCCESFULLY_RETRIEVED)
 }
 
+// GetTodo godoc
+//
+//	@Summary		Get a single todo
+//	@Description	Get a single todo
+//	@Tags			todo
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	model.Todo
+//	@Failure		404	{object}	string
+//	@Failure		500	{object}	string
+//	@Router			/todo/{id} [get]
 func (h *Handler) GetTodo(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -36,12 +60,25 @@ func (h *Handler) GetTodo(c *fiber.Ctx) error {
 
 	todo, err := h.Storage.GetTodo(id)
 	if err != nil {
-		return err
+		return fiber.NewError(fiber.StatusInternalServerError, fiber.ErrInternalServerError.Message)
 	}
 
 	return utils.JsonResponse(c, todo, constants.RESPONSE_SUCCESFULLY_RETRIEVED)
 }
 
+// CreateTodo godoc
+//
+//	@Summary		Create a Todo
+//	@Description	Create a new todo item
+//	@Tags			todo
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body	model.CreateTodo	true	"Add todo"
+//	@Success		200	{object}	model.Todo
+//	@Failure		400	{object}	string
+//	@Failure		404	{object}	string
+//	@Failure		500	{object}	string
+//	@Router			/todo [post]
 func (h *Handler) CreateTodo(c *fiber.Ctx) error {
 	body := model.Todo{}
 	err := c.BodyParser(&body)
@@ -56,12 +93,22 @@ func (h *Handler) CreateTodo(c *fiber.Ctx) error {
 
 	todo, err := h.Storage.CreateTodo(&body)
 	if err != nil {
-		return err
+		return fiber.NewError(fiber.StatusInternalServerError, fiber.ErrInternalServerError.Message)
 	}
 
 	return utils.JsonResponse(c, todo, constants.RESPONSE_SUCCESFULLY_CREATED)
 }
 
+// GetTodo godoc
+//
+//	@Summary		Delete a todo
+//	@Description	Delete a single todo
+//	@Tags			todo
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	string
+//	@Failure		500	{object}	string
+//	@Router			/todo/{id} [delete]
 func (h *Handler) DeleteTodo(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -70,12 +117,25 @@ func (h *Handler) DeleteTodo(c *fiber.Ctx) error {
 
 	err = h.Storage.DeleteTodo(id)
 	if err != nil {
-		return err
+		return fiber.NewError(fiber.StatusInternalServerError, fiber.ErrInternalServerError.Message)
 	}
 
-	return utils.JsonResponse(c, make([]model.Todo, 0), constants.RESPONSE_SUCCESFULLY_DELETED)
+	return utils.JsonResponse(c, "", constants.RESPONSE_SUCCESFULLY_DELETED)
 }
 
+// CreateTodo godoc
+//
+//	@Summary		Update a Todo
+//	@Description	Update a new todo item
+//	@Tags			todo
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body	model.CreateTodo	true	"Update todo"
+//	@Success		200	{object}	model.Todo
+//	@Failure		400	{object}	string
+//	@Failure		404	{object}	string
+//	@Failure		500	{object}	string
+//	@Router			/todo/{id} [put]
 func (h *Handler) UpdateTodo(c *fiber.Ctx) error {
 	body := model.Todo{}
 	err := c.BodyParser(&body)
@@ -96,7 +156,7 @@ func (h *Handler) UpdateTodo(c *fiber.Ctx) error {
 
 	todo, err := h.Storage.UpdateTodo(&body)
 	if err != nil {
-		return err
+		return fiber.NewError(fiber.StatusInternalServerError, fiber.ErrInternalServerError.Message)
 	}
 
 	return utils.JsonResponse(c, todo, constants.RESPONSE_SUCCESFULLY_UPDATED)

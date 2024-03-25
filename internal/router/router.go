@@ -5,12 +5,20 @@ import (
 	"todo/internal/middleware"
 	"todo/internal/storage"
 
+	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
 )
 
 func SetupRoutes(app *fiber.App, db *sqlx.DB) {
+	cfg := swagger.Config{
+		BasePath: "/docs",
+		FilePath: "./docs/swagger.json",
+		Path:     "swagger",
+		Title:    "Swagger API Docs",
+	}
 
+	app.Use(swagger.New(cfg))
 	app.Get("/hello", controller.Hello)
 
 	// Create api group

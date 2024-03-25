@@ -13,6 +13,19 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// CreateUser godoc
+//
+//	@Summary		Register an account
+//	@Description	Register a new user account
+//	@Tags			user
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body	model.CreateUser	true	"Add user"
+//	@Success		200	{object}	model.User
+//	@Failure		400	{object}	string
+//	@Failure		404	{object}	string
+//	@Failure		500	{object}	string
+//	@Router			/register [post]
 func (h *Handler) CreateUser(c *fiber.Ctx) error {
 	var body struct {
 		Email    string
@@ -20,7 +33,7 @@ func (h *Handler) CreateUser(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&body); err != nil {
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, constants.MSG_REGISTRATION_FAILED_BODY)
 	}
 
 	// Hash and salt the password (crypto)
@@ -39,7 +52,7 @@ func (h *Handler) CreateUser(c *fiber.Ctx) error {
 	userRes, err := h.Storage.CreateUser(&user)
 	if err != nil {
 		if err.Error() == "That email account is already in use" {
-			return utils.JsonResponse(c, "", constants.RESPONSE_EMAIL_CONFLICT)
+			return fiber.NewError(fiber.StatusBadRequest, constants.MSG_EMAIL_ADDRESS_IN_USE)
 		}
 
 		log.Error(err)
@@ -50,6 +63,19 @@ func (h *Handler) CreateUser(c *fiber.Ctx) error {
 	return utils.JsonResponse(c, userRes, constants.RESPONSE_SUCCESFULLY_CREATED)
 }
 
+// Login godoc
+//
+//	@Summary		Login
+//	@Description	Login to your user account
+//	@Tags			user
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body	model.LoginUser		true	"Login user"
+//	@Success		200	{object}	string
+//	@Failure		400	{object}	string
+//	@Failure		404	{object}	string
+//	@Failure		500	{object}	string
+//	@Router			/login [post]
 func (h *Handler) Login(c *fiber.Ctx) error {
 	// Get email and pass from body
 	var body struct {
@@ -83,6 +109,18 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 	return utils.JsonResponse(c, "", constants.RESPONSE_SUCCESFUL_LOGIN)
 }
 
+// Login godoc
+//
+//	@Summary		Validate
+//	@Description	Validate that user account is still logged in and refresh JWT token. This will require the authorization cookie as part of the request to be successful.
+//	@Tags			user
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	model.User
+//	@Failure		400	{object}	string
+//	@Failure		404	{object}	string
+//	@Failure		500	{object}	string
+//	@Router			/validate [post]
 func (h *Handler) Validate(c *fiber.Ctx) error {
 	user := c.Locals("user").(*model.User)
 
