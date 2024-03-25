@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users(
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
 );
 
+-- UPDATED AT functionality on todo
 DROP FUNCTION IF EXISTS update_updated_at_todo();
 
 CREATE FUNCTION update_updated_at_todo()
@@ -29,3 +30,4 @@ CREATE TRIGGER update_todos_updated_at
     ON todos
     FOR EACH ROW
 EXECUTE PROCEDURE update_updated_at_todo();
+-- UPDATED AT functionality on todo ends
