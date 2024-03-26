@@ -26,12 +26,14 @@ import (
 //	@Failure		500	{object}	string
 //	@Router			/todo [get]
 func (h *Handler) GetTodos(c *fiber.Ctx) error {
+	user := c.Locals("user").(*model.User)
+
 	page := utils.GetPaginationQuery(c.Query("page"), 1)
 	perPage := utils.GetPaginationQuery(c.Query("per_page"), constants.PAGINATION_PERPAGE_DEFAULT)
 	filters := utils.GetFiltersFromQuery(c.Query("filter"), constants.TodoAcceptedFilters)
 	sortByString := utils.GetSortByString(c.Query("sort_by"), "created_at DESC", constants.AcceptedSortMethodsTodo)
 
-	todos, count, err := h.Storage.GetTodos(types.Pagination{Page: page, PerPage: perPage}, sortByString, filters)
+	todos, count, err := h.Storage.GetTodos(user, types.Pagination{Page: page, PerPage: perPage}, sortByString, filters)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fiber.ErrInternalServerError.Message)
 	}
@@ -53,14 +55,16 @@ func (h *Handler) GetTodos(c *fiber.Ctx) error {
 //	@Failure		500	{object}	string
 //	@Router			/todo/{id} [get]
 func (h *Handler) GetTodo(c *fiber.Ctx) error {
+	user := c.Locals("user").(*model.User)
+
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, fiber.ErrNotFound.Message)
 	}
 
-	todo, err := h.Storage.GetTodo(id)
+	todo, err := h.Storage.GetTodo(id, user)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, fiber.ErrInternalServerError.Message)
+		return err
 	}
 
 	return utils.JsonResponse(c, todo, constants.RESPONSE_SUCCESFULLY_RETRIEVED)
@@ -80,6 +84,8 @@ func (h *Handler) GetTodo(c *fiber.Ctx) error {
 //	@Failure		500	{object}	string
 //	@Router			/todo [post]
 func (h *Handler) CreateTodo(c *fiber.Ctx) error {
+	user := c.Locals("user").(*model.User)
+
 	body := model.Todo{}
 	err := c.BodyParser(&body)
 	if err != nil {
@@ -91,9 +97,9 @@ func (h *Handler) CreateTodo(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	todo, err := h.Storage.CreateTodo(&body)
+	todo, err := h.Storage.CreateTodo(&body, user)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, fiber.ErrInternalServerError.Message)
+		return err
 	}
 
 	return utils.JsonResponse(c, todo, constants.RESPONSE_SUCCESFULLY_CREATED)
@@ -110,14 +116,16 @@ func (h *Handler) CreateTodo(c *fiber.Ctx) error {
 //	@Failure		500	{object}	string
 //	@Router			/todo/{id} [delete]
 func (h *Handler) DeleteTodo(c *fiber.Ctx) error {
+	user := c.Locals("user").(*model.User)
+
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, fiber.ErrNotFound.Message)
 	}
 
-	err = h.Storage.DeleteTodo(id)
+	err = h.Storage.DeleteTodo(id, user)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, fiber.ErrInternalServerError.Message)
+		return err
 	}
 
 	return utils.JsonResponse(c, "", constants.RESPONSE_SUCCESFULLY_DELETED)
@@ -137,6 +145,8 @@ func (h *Handler) DeleteTodo(c *fiber.Ctx) error {
 //	@Failure		500	{object}	string
 //	@Router			/todo/{id} [put]
 func (h *Handler) UpdateTodo(c *fiber.Ctx) error {
+	user := c.Locals("user").(*model.User)
+
 	body := model.Todo{}
 	err := c.BodyParser(&body)
 	if err != nil {
@@ -154,9 +164,9 @@ func (h *Handler) UpdateTodo(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	todo, err := h.Storage.UpdateTodo(&body)
+	todo, err := h.Storage.UpdateTodo(&body, user)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, fiber.ErrInternalServerError.Message)
+		return err
 	}
 
 	return utils.JsonResponse(c, todo, constants.RESPONSE_SUCCESFULLY_UPDATED)

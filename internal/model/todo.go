@@ -9,6 +9,7 @@ type Todo struct {
 	Completed   bool      `json:"completed"`
 	CreatedAt   time.Time `json:"createdAt" db:"created_at"`
 	UpdatedAt   time.Time `json:"updatedAt" db:"updated_at"`
+	CreatedBy   uint      `json:"createdBy" db:"created_by"`
 }
 
 type CreateTodo struct {
